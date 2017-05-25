@@ -1,0 +1,93 @@
+A Static Memory Management Library
+@author Enver Bashirov
+
+SOME IMPORTANT NOTES;
+
+Functions Available to User
+
+int    s_create(int);
+void  *s_alloc(int);
+void   s_free(void *);
+void   s_print(void); 
+
+Functions & Structures Not Available to User
+
+//Node Structure
+struct s_block {
+	size_t size;
+	struct s_block *next;
+	int f;
+};
+
+/* Global Variables */
+void *segmentptr; // points to the start of memory segment to manage
+int   segmentsize;  // size of segment to manage
+pthread_mutex_t mutex; // protection of global variables
+//--------------------
+
+//Functions
+//Prints information about a single block
+void printBlock( struct s_block *);
+
+//Puts a block with the provided information
+struct s_block * insertBlock( void*, void*, size_t, int);
+
+//Finds the next sufficient block with provided size
+struct s_block * findBlock( size_t);
+
+//Splits a given block into two with provided new size
+void splitBlock( struct s_block *, size_t);
+
+//Merges the free segments if they are repeating
+void mergeFree();
+
+REPORT
+
+	Briefly, salloc.c creates a static library for memory management functions such as
+creating an allocated segment, memory allocation, memory deallocation and printing 
+the segment information.
+
+Example Output from Single Processed app.c
+/*
+Block addr: 8ea000, size: 600	 is allocated
+Block addr: 8ea270, size: 4504	 is allocated
+Block addr: 8eb420, size: 1304	 is allocated
+Block addr: 8ea000, size: 1048552	 is free
+//at this point all allocated memory is freed
+//the given segment size was 1024KB so 
+//1048576 - BLOCK_SIZE(24) = 1048552
+*/
+
+Example Output from Multithreaded app.c
+/*
+Block addr: 11d7000, size: 8192 is allocated
+Block addr: 11d9017, size: 8192 is allocated
+Block addr: 11db030, size: 8192 is allocated
+Block addr: 11dd048, size: 8092 is free
+
+Block addr: 11d7000, size: 8192 is allocated
+Block addr: 11d9017, size: 8192 is free
+Block addr: 11db030, size: 8192 is allocated
+Block addr: 11dd048, size: 8092 is free
+
+Block addr: 11d7000, size: 8192 is allocated
+Block addr: 11d9017, size: 8192 is free
+Block addr: 11db030, size: 8192 is allocated
+Block addr: 11dd048, size: 8092 is free
+
+Block addr: 11d7000, size: 32744 is free
+//at this point all allocated memory is freed
+//the given segment size was 32KB so 
+//32768 - BLOCK_SIZE(24) = 32744
+*/
+
+	s_alloc function uses insertBlock, findBlock, splitBlock functions in order to work. 
+Simply find a sufficient memory segment, if size of the block is bigger than what is 
+expected, than splits it into two and returns the allocated memory block.
+
+	s_free function uses mergeFree function. It removes the segment block if segment is
+not empty and concatenates the repeating free segments.
+
+	s_print function just prints the blocks of the segment as seen from the example
+outputs.
+
