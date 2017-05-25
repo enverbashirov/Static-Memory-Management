@@ -6,7 +6,7 @@ libsalloc.a: 	salloc.c
 	ranlib libsalloc.a
 
 app:
-	gcc -Wall -o app ../supplied/app.c  -L. -lsalloc -lpthread
+	gcc -Wall -o app app.c  -L. -lsalloc -lpthread
 
 
 clean: 
